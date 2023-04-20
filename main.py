@@ -30,12 +30,17 @@ class IOTblog:
         try:
             self.driver.maximize_window()
             self.driver.get("https://blogs.cisco.com/internet-of-things")
-            sleep(5)
             
+            # wait for page to load
+            wait = WebDriverWait(self.driver, 10)
+            cancelbtn = self.driver.find_element(By.XPATH,"/html/body/div[1]/div[2]/div/div[2]/button")
+            if cancelbtn:
+              cancelbtn.click()
+        
             ifpagination = True
             blogs_data = []
             while ifpagination:
-                # sleep(10)
+               
                 data = self.driver.find_elements(By.CLASS_NAME,"blog-card")
                 totalblogonpage = len(data)
                 # print("totalblogonpage: ",totalblogonpage)
@@ -59,14 +64,18 @@ class IOTblog:
                     # Scroll the link into view
                     self.driver.execute_script("arguments[0].scrollIntoView();", cardlink)
 
+                    cardlink.click()
                     # Click the link using JavaScript
-                    action = ActionChains(self.driver)
-                    action.move_to_element(cardlink).click().perform()
+                    # action = ActionChains(self.driver)
+                    # action.move_to_element(cardlink).click().perform()
                     
+                    # Wait for the entry-title element to be visible
+                    title_element = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.CLASS_NAME, "entry-title")))
+
                     Blog_dict = {}
-                    title = self.driver.find_element(By.CLASS_NAME,"entry-title")
+                    title = title_element.text
                     # print("Title: ",title.text)
-                    Blog_dict["Title"] = title.text
+                    Blog_dict["Title"] = title
                     
                     author = self.driver.find_element(By.XPATH,"/html/body/cdc-template-micro/div/div[1]/div/main/article/div/div[1]/div[2]/p/a")
                     # print("Author: ",author.text)
@@ -104,17 +113,19 @@ class IOTblog:
                     # sleep(10)
                     
                     # Wait for the previous page to load
-                    WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "blog-card")))
+                    WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "blog-card")))
 
                 df.to_csv('IOTBlog.csv')
                 pagination = self.driver.find_element(By.CLASS_NAME,"pagination")
                 # print(pagination.text)
                 
                 # locate the last pagination element
-                last_page_link = self.driver.find_element(By.CSS_SELECTOR,'ul.pagination li:last-child a')
+                # last_page_link = self.driver.find_element(By.CSS_SELECTOR,'ul.pagination li:last-child a')
                 # print(last_page_link.text)
+                
+                last_page_link = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'ul.pagination li:last-child a')))
                 last_page_link.click()
-                sleep(5)
+                
                 if last_page_link:
                     ifpagination = True
                 else:
